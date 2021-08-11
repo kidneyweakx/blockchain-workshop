@@ -1,5 +1,11 @@
+h1 {
+    text-align: center;
+    background-color: aqua;
+}
+
 body {
     padding: 20px;
+    background: darkcyan;
 }
 
 .rotating-icon {
@@ -18,3 +24,10 @@ body {
         transform: rotateX(360deg);
     }
 }
+
+* {
+    box-sizing: border-box;
+  }
+
+
+  

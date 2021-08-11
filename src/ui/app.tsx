@@ -6,10 +6,11 @@ import Web3 from 'web3';
 import { ToastContainer, toast } from 'react-toastify';
 import './app.scss';
 import 'react-toastify/dist/ReactToastify.css';
+
 import { PolyjuiceHttpProvider } from '@polyjuice-provider/web3';
 import { AddressTranslator } from 'nervos-godwoken-integration';
 
-import { SimpleStorageWrapper } from '../lib/contracts/SimpleStorageWrapper';
+import { ZombieNftFactoryWrapper } from '../lib/contracts/ZombieNftFactoryWrapper';
 import { CONFIG } from '../config';
 
 async function createWeb3() {
@@ -21,7 +22,6 @@ async function createWeb3() {
             ethAccountLockCodeHash: CONFIG.ETH_ACCOUNT_LOCK_CODE_HASH,
             web3Url: godwokenRpcUrl
         };
-
         const provider = new PolyjuiceHttpProvider(godwokenRpcUrl, providerConfig);
         const web3 = new Web3(provider || Web3.givenProvider);
 
@@ -41,7 +41,7 @@ async function createWeb3() {
 
 export function App() {
     const [web3, setWeb3] = useState<Web3>(null);
-    const [contract, setContract] = useState<SimpleStorageWrapper>();
+    const [contract, setContract] = useState<ZombieNftFactoryWrapper>();
     const [accounts, setAccounts] = useState<string[]>();
     const [l2Balance, setL2Balance] = useState<bigint>();
     const [existingContractIdInputValue, setExistingContractIdInputValue] = useState<string>();
@@ -49,6 +49,8 @@ export function App() {
     const [deployTxHash, setDeployTxHash] = useState<string | undefined>();
     const [polyjuiceAddress, setPolyjuiceAddress] = useState<string | undefined>();
     const [transactionInProgress, setTransactionInProgress] = useState(false);
+    const [imgUrl, setImgUrl] = useState('');
+    const [listNFT, setListNFT] = useState([]);//useState([]);
     const toastId = React.useRef(null);
     const [newStoredNumberInputValue, setNewStoredNumberInputValue] = useState<
         number | undefined
@@ -86,8 +88,16 @@ export function App() {
 
     const account = accounts?.[0];
 
+    useEffect(() => {
+        if (contract) {
+            setInterval(() => {
+                contract.getListNFT(account).then(setListNFT);
+            }, 10000);
+        }
+    }, [contract]);
+
     async function deployContract() {
-        const _contract = new SimpleStorageWrapper(web3);
+        const _contract = new ZombieNftFactoryWrapper(web3);
 
         try {
             setDeployTxHash(undefined);
@@ -111,34 +121,33 @@ export function App() {
         }
     }
 
-    async function getStoredValue() {
-        const value = await contract.getStoredValue(account);
-        toast('Successfully read latest stored value.', { type: 'success' });
+    // async function getStoredValue() {
+    //     const value = await contract.getStoredValue(account);
+    //     toast('Successfully read latest stored value.', { type: 'success' });
 
-        setStoredValue(value);
-    }
+    //     setStoredValue(value);
+    // }
 
     async function setExistingContractAddress(contractAddress: string) {
-        const _contract = new SimpleStorageWrapper(web3);
+        const _contract = new ZombieNftFactoryWrapper(web3);
         _contract.useDeployed(contractAddress.trim());
 
         setContract(_contract);
         setStoredValue(undefined);
     }
 
-    async function setNewStoredValue() {
+    async function createRandomZombie() {
         try {
             setTransactionInProgress(true);
-            await contract.setStoredValue(newStoredNumberInputValue, account);
+            // await contract.setStoredValue(newStoredNumberInputValue, account);
+            await contract.createRandomZombie(imgUrl, account);
             toast(
-                'Successfully set latest stored value. You can refresh the read value now manually.',
+                'Successfully Create Zombie.',
                 { type: 'success' }
             );
         } catch (error) {
             console.error(error);
-            toast.error(
-                'There was an error sending your transaction. Please check developer console.'
-            );
+            toast.error('Fail create Zombie');
         } finally {
             setTransactionInProgress(false);
         }
@@ -167,12 +176,11 @@ export function App() {
     const LoadingIndicator = () => <span className="rotating-icon">⚙️</span>;
 
     return (
-        <div>
+        <div style={{textAlign: 'center'}}>
             Your ETH address: <b>{accounts?.[0]}</b>
             <br />
             <br />
             Your Polyjuice address: <b>{polyjuiceAddress || ' - '}</b>
-            <br />
             <br />
             Nervos Layer 2 balance:{' '}
             <b>{l2Balance ? (l2Balance / 10n ** 8n).toString() : <LoadingIndicator />} CKB</b>
@@ -182,13 +190,6 @@ export function App() {
             Deploy transaction hash: <b>{deployTxHash || '-'}</b>
             <br />
             <hr />
-            <p>
-                The button below will deploy a SimpleStorage smart contract where you can store a
-                number value. By default the initial stored value is equal to 123 (you can change
-                that in the Solidity smart contract). After the contract is deployed you can either
-                read stored value from smart contract or set a new one. You can do that using the
-                interface below.
-            </p>
             <button onClick={deployContract} disabled={!l2Balance}>
                 Deploy contract
             </button>
@@ -204,27 +205,38 @@ export function App() {
                 Use existing contract
             </button>
             <br />
-            <br />
-            <button onClick={getStoredValue} disabled={!contract}>
-                Get stored value
-            </button>
-            {storedValue ? <>&nbsp;&nbsp;Stored value: {storedValue.toString()}</> : null}
-            <br />
+            
             <br />
             <input
-                type="number"
-                onChange={e => setNewStoredNumberInputValue(parseInt(e.target.value, 10))}
+                type="string"
+                placeholder="image url"
+                // onChange={e => setNewStoredNumberInputValue(parseInt(e.target.value, 10))}
+                onChange={e => setImgUrl(e.target.value)}
             />
-            <button onClick={setNewStoredValue} disabled={!contract}>
-                Set new stored value
+            <button onClick={createRandomZombie} disabled={!contract}>
+                create NFT
             </button>
+            <hr />
             <br />
-            <br />
+            <div>
+            
+                <h3> Zombies Gallery</h3>
+
+                {listNFT.map(data => {
+                    return (
+                        <><img
+                            key={data[0]}
+                            src={data[0]}
+                            style={{ width: 200, height: 200, border: '2px solid black' }} />
+                            <br/> DNA: {data[1]} </>
+    
+                    )
+                })}
+            </div>
             <br />
             <br />
             <hr />
-            The contract is deployed on Nervos Layer 2 - Godwoken + Polyjuice. After each
-            transaction you might need to wait up to 120 seconds for the status to be reflected.
+
             <ToastContainer />
         </div>
     );
