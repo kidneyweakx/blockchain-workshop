@@ -1,11 +1,33 @@
 h1 {
     text-align: center;
-    background-color: aqua;
+    background-color: rgba(119, 0, 255, 0.5);
+    color:azure;
+    font-size:50px;
 }
 
 body {
     padding: 20px;
-    background: darkcyan;
+    background-color: darkslateblue;
+    color: azure;
+    font-size: 30px;
+}
+
+b {
+    color: rgba(0, 255, 106, 0.726);
+}
+
+input {
+    padding: 20px;
+    font-size: 30px;
+    border-radius: 20px;
+}
+
+button {
+    padding: 20px;
+    background: rgba(0, 255, 106, 0.726);
+    color:azure;
+    font-size: 30px;
+    border-radius: 20px;
 }
 
 .rotating-icon {

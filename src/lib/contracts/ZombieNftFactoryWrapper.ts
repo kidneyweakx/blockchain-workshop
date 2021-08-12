@@ -27,14 +27,14 @@ export class ZombieNftFactoryWrapper {
     //     return data;
     // }
 
-    async getListNFT(address: string) {
+    async getListZombies(address: string) {
         const totalNft = await this.contract.methods.getZombieLength().call({ from: address });
         console.log(totalNft);
-        const arrNFT = new Array(Number(totalNft)).fill(0).map((_, index) => index + 1);
+        const arrNFT = new Array(Number(totalNft)).fill(0).map((_, index) => index);
 
         const data = await Promise.all(
             arrNFT.map(_nftId =>
-                this.contract.methods.getZombie((_nftId-1).toString()).call({
+                this.contract.methods.getZombie((_nftId).toString()).call({
                     from: address
                 })
             )

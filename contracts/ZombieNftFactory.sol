@@ -46,10 +46,6 @@ contract ZombieNftFactory is ERC721URIStorage {
 
         return zombieId;
     }
-
-    function getZombieName(uint256 id) public view returns (string memory) {
-        return zombies[id].name;
-    }
     
     function getZombie(uint256 id) public view returns (Zombie memory) {
         return zombies[id];

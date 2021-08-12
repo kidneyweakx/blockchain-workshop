@@ -1,9 +1,18 @@
-# Blockchain workshop
+# Blockchain workshop(Crazy Zombie Factory)
 
-Start UI:
+> Nervos Gitcoin: 7) Port An Existing Ethereum DApp To Polyjuice
+
+### Start UI:
 
 ```
 yarn && yarn build && yarn ui
 ```
 
-<!-- 0xebe3dD41924ebE03114330672c1D2907ae01979e -->
+### Crazy Zombie Factory
+
+Youtube Demo: https://youtu.be/GuXyKl0OZuU 
+
+### Use Example
+CryptoZombies: https://cryptozombies.io/
+
+OpenZeppelin: https://openzeppelin.com/

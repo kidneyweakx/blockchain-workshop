@@ -50,7 +50,7 @@ export function App() {
     const [polyjuiceAddress, setPolyjuiceAddress] = useState<string | undefined>();
     const [transactionInProgress, setTransactionInProgress] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
-    const [listNFT, setListNFT] = useState([]);//useState([]);
+    const [listZombies, setListZombies] = useState([]);//useState([]);
     const toastId = React.useRef(null);
     const [newStoredNumberInputValue, setNewStoredNumberInputValue] = useState<
         number | undefined
@@ -91,7 +91,7 @@ export function App() {
     useEffect(() => {
         if (contract) {
             setInterval(() => {
-                contract.getListNFT(account).then(setListNFT);
+                contract.getListZombies(account).then(setListZombies);
             }, 10000);
         }
     }, [contract]);
@@ -179,15 +179,10 @@ export function App() {
         <div style={{textAlign: 'center'}}>
             Your ETH address: <b>{accounts?.[0]}</b>
             <br />
-            <br />
             Your Polyjuice address: <b>{polyjuiceAddress || ' - '}</b>
             <br />
             Nervos Layer 2 balance:{' '}
             <b>{l2Balance ? (l2Balance / 10n ** 8n).toString() : <LoadingIndicator />} CKB</b>
-            <br />
-            <br />
-            Deployed contract address: <b>{contract?.address || '-'}</b> <br />
-            Deploy transaction hash: <b>{deployTxHash || '-'}</b>
             <br />
             <hr />
             <button onClick={deployContract} disabled={!l2Balance}>
@@ -205,30 +200,33 @@ export function App() {
                 Use existing contract
             </button>
             <br />
-            
+            Deployed contract address: <b>{contract?.address || '-'}</b> <br />
+            Deploy transaction hash: <b>{deployTxHash || '-'}</b>
             <br />
+
+            <hr />
+            <h3> 🧟Crazy Zombie Factory🧟</h3>
             <input
                 type="string"
                 placeholder="image url"
-                // onChange={e => setNewStoredNumberInputValue(parseInt(e.target.value, 10))}
                 onChange={e => setImgUrl(e.target.value)}
             />
             <button onClick={createRandomZombie} disabled={!contract}>
-                create NFT
+                create Random Zombie (use image)🧟‍♂️
             </button>
-            <hr />
             <br />
             <div>
-            
-                <h3> Zombies Gallery</h3>
+                <h3> Zombies Gallery<br/>🧟🧟‍♀️🧟‍♂️🧟🧟‍♀️🧟‍♂️🧟🧟‍♀️🧟‍♂️</h3>
 
-                {listNFT.map(data => {
+                {listZombies.map(data => {
                     return (
                         <><img
                             key={data[0]}
                             src={data[0]}
-                            style={{ width: 200, height: 200, border: '2px solid black' }} />
-                            <br/> DNA: {data[1]} </>
+                            style={{ width: 200, height: 200, border: '2px solid black' ,borderRadius:10 }} />
+                            <br/> <b>Level:</b>{data[2]} 
+                            <br/> <b>DNA:</b> {data[1]} <br/> 
+                            </>
     
                     )
                 })}
