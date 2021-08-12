@@ -13,6 +13,10 @@ import { AddressTranslator } from 'nervos-godwoken-integration';
 import { ZombieNftFactoryWrapper } from '../lib/contracts/ZombieNftFactoryWrapper';
 import { CONFIG } from '../config';
 
+// SUDT ERC20
+import * as CompiledContractArtifact from '../../build/contracts/ERC20.json';
+const SUDT_PROXY_CONTRACT_ADDRESS = "0xadd5c6Ed38Ec47BB2c643e94fF3cb7768978FB94";
+
 async function createWeb3() {
     // Modern dapp browsers...
     if ((window as any).ethereum) {
@@ -51,6 +55,9 @@ export function App() {
     const [transactionInProgress, setTransactionInProgress] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
     const [listZombies, setListZombies] = useState([]);//useState([]);
+    // l1 -> l2 deposit
+    const [depositAccount, setDepositAccount] = useState<string | undefined>();
+    const [sudtBalance, setSudtBalance] = useState<bigint>();
     const toastId = React.useRef(null);
     const [newStoredNumberInputValue, setNewStoredNumberInputValue] = useState<
         number | undefined
@@ -64,6 +71,34 @@ export function App() {
             setPolyjuiceAddress(undefined);
         }
     }, [accounts?.[0]]);
+
+    // GetDeposit Account
+    useEffect(() => {
+        if (accounts?.[0]) {
+            const addressTranslator = new AddressTranslator();
+            addressTranslator.getLayer2DepositAddress(web3, accounts?.[0]).then(_dAdr => {
+                setDepositAccount(_dAdr.addressString);
+
+                console.log(`Layer 2 Deposit Address on Layer 1: \n${_dAdr.addressString}`);
+            })
+        } else {
+            setDepositAccount(undefined);
+        }
+    }, [accounts?.[0]]);
+
+    useEffect(() => {
+        if (polyjuiceAddress) {
+            const contract = new web3.eth.Contract(
+                CompiledContractArtifact.abi as any, 
+                SUDT_PROXY_CONTRACT_ADDRESS
+            );
+            contract.methods.balanceOf(polyjuiceAddress).call({
+                from: accounts?.[0]
+            }).then((_sudtBalance : any) => setSudtBalance(BigInt(Number(_sudtBalance))));
+
+            
+        } 
+    }, [polyjuiceAddress]);
 
     useEffect(() => {
         if (transactionInProgress && !toastId.current) {
@@ -176,16 +211,40 @@ export function App() {
     const LoadingIndicator = () => <span className="rotating-icon">⚙️</span>;
 
     return (
-        <div style={{textAlign: 'center'}}>
-            Your ETH address: <b>{accounts?.[0]}</b>
-            <br />
-            Your Polyjuice address: <b>{polyjuiceAddress || ' - '}</b>
-            <br />
-            Nervos Layer 2 balance:{' '}
-            <b>{l2Balance ? (l2Balance / 10n ** 8n).toString() : <LoadingIndicator />} CKB</b>
-            <br />
+        <div>
+            <table>
+            <tr>
+            <td><b>ETH</b> address: </td>
+            <td><b>{accounts?.[0]}</b></td>
+            </tr>
+            <tr>
+            <td><b>Polyjuice</b> address: </td>
+            <td><b>{polyjuiceAddress || ' - '}</b></td>
+            </tr>
+            <tr>
+            <td><b>Nervos Layer2(godwoken)</b> balance:{' '}</td>
+            <td><b>{l2Balance ? (l2Balance / 10n ** 8n).toString() : <LoadingIndicator />} CKB</b></td>
+            </tr>
+            </table>
             <hr />
-            <button onClick={deployContract} disabled={!l2Balance}>
+            <h3>🧟Deposit Asset to L2</h3>
+            <p>How To transferring from Ethereum to Nervos? Force Bridge is your solution</p>
+            <table>
+            
+            <tr>Deposit to L2 at:{' '}
+                <a href="https://force-bridge-test.ckbapp.dev/bridge/Ethereum/Nervos?xchain-asset=0x0000000000000000000000000000000000000000">
+                    <button>Force Bridge</button>
+                </a></tr>
+            <tr>🧟Layer2 Deposit Recipient: <b>{depositAccount || ' - '}</b></tr>
+            <tr>SUDT Contract Address: {' '} <b>{SUDT_PROXY_CONTRACT_ADDRESS}</b></tr>
+            <tr><b>Nervos Layer2(godwoken) sudt</b> balance:{' '}
+            <b>{sudtBalance ? (sudtBalance).toString() : <LoadingIndicator />} SUDT</b></tr>
+            </table>
+            <hr />
+
+            <h3> 🧟Crazy Zombie Factory🧟</h3>
+            <table>
+            <tr><button onClick={deployContract} disabled={!l2Balance}>
                 Deploy contract
             </button>
             &nbsp;or&nbsp;
@@ -199,13 +258,10 @@ export function App() {
             >
                 Use existing contract
             </button>
-            <br />
-            Deployed contract address: <b>{contract?.address || '-'}</b> <br />
-            Deploy transaction hash: <b>{deployTxHash || '-'}</b>
-            <br />
-
-            <hr />
-            <h3> 🧟Crazy Zombie Factory🧟</h3>
+            <br /></tr>
+            <tr>Deployed contract address: <b>{contract?.address || '-'}</b> </tr>
+            <tr>Deploy transaction hash: <b>{deployTxHash || '-'}</b></tr>
+            <tr>
             <input
                 type="string"
                 placeholder="image url"
@@ -214,20 +270,23 @@ export function App() {
             <button onClick={createRandomZombie} disabled={!contract}>
                 create Random Zombie (use image)🧟‍♂️
             </button>
-            <br />
+            </tr>
+            </table>
+            
             <div>
                 <h3> Zombies Gallery<br/>🧟🧟‍♀️🧟‍♂️🧟🧟‍♀️🧟‍♂️🧟🧟‍♀️🧟‍♂️</h3>
 
                 {listZombies.map(data => {
                     return (
-                        <><img
+                        <table>
+                            <tr><td rowSpan= {2}><img
                             key={data[0]}
                             src={data[0]}
-                            style={{ width: 200, height: 200, border: '2px solid black' ,borderRadius:10 }} />
-                            <br/> <b>Level:</b>{data[2]} 
-                            <br/> <b>DNA:</b> {data[1]} <br/> 
-                            </>
-    
+                            style={{ width: 200, height: 200, border: '2px solid black' ,borderRadius:10 }} /></td></tr>
+                            <tr>
+                            <td> <b>Level:</b> {data[2]} </td><br />
+                            <td><b>DNA:</b> {data[1]} </td></tr>
+                        </table>
                     )
                 })}
             </div>
